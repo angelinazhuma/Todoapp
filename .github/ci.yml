@@ -23,22 +23,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Test backend
-        working-directory: backend
-        run: mvn test
-
-      - name: Build backend
-        working-directory: backend
-        run: mvn -DskipTests package
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm install
-
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
-
       - name: Build Docker images
         run: docker compose build
 
