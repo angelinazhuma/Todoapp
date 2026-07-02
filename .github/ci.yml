@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-build-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test backend
+        working-directory: backend
+        run: mvn test
+
+      - name: Build backend
+        working-directory: backend
+        run: mvn -DskipTests package
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start project
+        run: docker compose up -d
+
+      - name: Check backend
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/api/v1/tasks; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Check frontend
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Stop project
+        if: always()
+        run: docker compose down -v
