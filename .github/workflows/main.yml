@@ -23,17 +23,42 @@ jobs:
         with:
           node-version: 20
 
+      - name: Clean database
+        run: docker compose down -v
+
       - name: Build and start project
         run: docker compose up --build -d
 
-      - name: Wait for project
-        run: sleep 20
-
       - name: Check backend
-        run: curl -f http://localhost:8080/api/v1/tasks
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/api/v1/tasks; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
 
       - name: Check frontend
         run: curl -f http://localhost:3000
+
+      - name: Check database exists
+        run: |
+          docker compose exec -T db psql -U todo -d todo -c "\dt"
+
+      - name: Check todo can be created
+        run: |
+          curl -f -X POST http://localhost:8080/api/v1/tasks \
+            -H "Content-Type: application/json" \
+            -d '{"title":"CI test task"}'
+
+      - name: Check todo was saved in database
+        run: |
+          COUNT=$(docker compose exec -T db psql -U todo -d todo -t -c "SELECT COUNT(*) FROM task;")
+          echo "Tasks count: $COUNT"
+          if [ "$COUNT" -lt 1 ]; then
+            exit 1
+          fi
 
       - name: Stop project
         if: always()
