@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-task-table
+      author: angelina
+      changes:
+        - createTable:
+            tableName: task
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+              - column:
+                  name: done
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
